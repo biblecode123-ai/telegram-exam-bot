@@ -7,6 +7,7 @@ async function helpHandler(ctx) {
     '*/login* — Log into your account\n' +
     '*/logout* — Log out\n' +
     '*/profile* — View your profile\n' +
+    '*/plans* — View premium plans and subscribe\n' +
     '*/help* — Show this message\n\n' +
     '*Modes:*\n' +
     '📖 *Study* — Answer with instant feedback (shows correct answer)\n' +
