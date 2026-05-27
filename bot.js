@@ -69,6 +69,16 @@ bot.action('finish', handleFinishTest);
 bot.action('done', handleDone);
 bot.action('cancel_test', handleCancelTest);
 bot.action('noop', (ctx) => ctx.answerCbQuery());
+bot.action('premium_ad', async (ctx) => {
+  await ctx.answerCbQuery();
+  const { handlePlans } = require('./handlers/plans');
+  await handlePlans(ctx);
+});
+bot.action('continue_ad', async (ctx) => {
+  await ctx.answerCbQuery();
+  const { sendQuestion } = require('./handlers/modes');
+  await sendQuestion(ctx);
+});
 
 bot.help(helpHandler);
 bot.command('cancel', handleCancelTest);

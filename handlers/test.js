@@ -1,4 +1,4 @@
-const { sendQuestion, LABELS, SITE_LINK, formatTime } = require('./modes');
+const { sendQuestion, showPremiumAd, LABELS, SITE_LINK, formatTime } = require('./modes');
 
 function checkTimeExpired(ctx) {
   if (!ctx.session.timeLimit || !ctx.session.startTime) return false;
@@ -66,6 +66,18 @@ async function handleNext(ctx) {
   if (checkTimeExpired(ctx)) { await ctx.answerCbQuery('⏰ Time is up!'); return await showTestResults(ctx); }
   await ctx.answerCbQuery();
   ctx.session.questionIndex += 1;
+
+  const isPremium = ctx.session.user?.is_premium || false;
+  if (
+    !isPremium &&
+    ctx.session.questionIndex % 2 === 0 &&
+    ctx.session.questionIndex > 0 &&
+    ctx.session.questionIndex < ctx.session.questions.length
+  ) {
+    await showPremiumAd(ctx);
+    return;
+  }
+
   await sendQuestion(ctx);
 }
 

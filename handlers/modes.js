@@ -149,6 +149,27 @@ async function sendQuestion(ctx) {
   });
 }
 
+async function showPremiumAd(ctx) {
+  await ctx.reply(
+    '⭐️ *Unlock Premium Features!*\n\n' +
+    'Get unlimited access to:\n' +
+    '✅ All questions & exams\n' +
+    '✅ AI-powered explanations\n' +
+    '✅ Priority support\n' +
+    '✅ No ads\n\n' +
+    'From just *1000 ETB / year*!',
+    {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '⭐️ View Premium Plans', callback_data: 'premium_ad' }],
+          [{ text: 'Continue ➡️', callback_data: 'continue_ad' }],
+        ],
+      },
+    }
+  );
+}
+
 async function isLimitReached(ctx) {
   ctx.session.questionsAttempted = ctx.session.questionsAttempted || 0;
   if (ctx.session.questionsAttempted >= 100) {
@@ -161,4 +182,4 @@ async function isLimitReached(ctx) {
   return false;
 }
 
-module.exports = { handleStudyMode, handleTestMode, sendQuestion, LABELS, SITE_LINK, formatTime };
+module.exports = { handleStudyMode, handleTestMode, sendQuestion, showPremiumAd, LABELS, SITE_LINK, formatTime };
