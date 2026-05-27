@@ -96,8 +96,10 @@ async function sendQuestion(ctx) {
   const label = mode === 'test' ? '📝 Test' : '📖 Study';
   const progress = `${label} — Question ${questionIndex + 1} / ${questions.length}`;
 
+  const optionsText = options.map((opt, i) => `${LABELS[i]}. ${opt.option_text}`).join('\n');
+
   const keyboard = options.map((opt, i) => [
-    { text: `${LABELS[i]}. ${opt.option_text}`, callback_data: `${prefix}_${questionIndex}_${LABELS[i]}` },
+    { text: LABELS[i], callback_data: `${prefix}_${questionIndex}_${LABELS[i]}` },
   ]);
 
   if (mode === 'test') {
@@ -107,7 +109,7 @@ async function sendQuestion(ctx) {
     ]);
   }
 
-  await ctx.reply(`*${progress}*\n\n${q.question_text}`, {
+  await ctx.reply(`*${progress}*\n\n${q.question_text}\n\n${optionsText}`, {
     parse_mode: 'Markdown',
     reply_markup: { inline_keyboard: keyboard },
   });

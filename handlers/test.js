@@ -25,23 +25,31 @@ async function handleTestAnswer(ctx) {
       explanation: question.explanation || '',
     });
 
-    await ctx.editMessageText(
-      `✅ *Answer recorded* — Question ${questionIdx + 1} of ${ctx.session.questions.length}`,
-      { parse_mode: 'Markdown' }
-    );
-
     ctx.session.questionsAttempted = (ctx.session.questionsAttempted || 0) + 1;
 
-    ctx.session.questionIndex += 1;
+    const isLast = questionIdx + 1 >= ctx.session.questions.length;
+    const btn = isLast
+      ? [{ text: '📊 See Results', callback_data: 'finish' }]
+      : [{ text: 'Next ➡️', callback_data: 'next' }];
 
-    if (ctx.session.questionIndex >= ctx.session.questions.length) {
-      await showTestResults(ctx);
-    } else {
-      await sendQuestion(ctx);
-    }
+    await ctx.editMessageText(
+      `✅ *Answer recorded* — Question ${questionIdx + 1} of ${ctx.session.questions.length}`,
+      { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [btn] } }
+    );
   } catch (err) {
     console.error('Test answer error:', err.message);
     await ctx.reply('❌ Error recording answer. Try /start again.');
+  }
+}
+
+async function handleNext(ctx) {
+  await ctx.answerCbQuery();
+  ctx.session.questionIndex += 1;
+
+  if (ctx.session.mode === 'test' && ctx.session.questionIndex >= ctx.session.questions.length) {
+    await showTestResults(ctx);
+  } else {
+    await sendQuestion(ctx);
   }
 }
 
@@ -53,6 +61,14 @@ async function handleFinishTest(ctx) {
     console.error('Finish test error:', err.message);
     await ctx.reply('❌ Error submitting test.');
   }
+}
+
+async function handleDone(ctx) {
+  await ctx.answerCbQuery();
+  ctx.session.mode = null;
+  ctx.session.questions = [];
+  ctx.session.questionIndex = 0;
+  await ctx.editMessageText('✅ Done! Use /start to try another exam.', { parse_mode: 'Markdown' });
 }
 
 async function handleCancelTest(ctx) {
@@ -109,5 +125,7 @@ async function showTestResults(ctx) {
 }
 
 module.exports = handleTestAnswer;
+module.exports.handleNext = handleNext;
 module.exports.handleFinishTest = handleFinishTest;
+module.exports.handleDone = handleDone;
 module.exports.handleCancelTest = handleCancelTest;

@@ -24,15 +24,21 @@ async function handleStudyAnswer(ctx) {
 
     const feedback =
       `${icon} *${status}*\n\n` +
+      `*Your answer:* ${selectedLabel}. ${selectedOption?.option_text || ''}\n` +
       `*Correct Answer:* ${correctLabel}. ${correctText}\n` +
       `*Explanation:* ${question.explanation || 'No explanation available.'}`;
 
-    await ctx.editMessageText(feedback, { parse_mode: 'Markdown' });
-
     ctx.session.questionsAttempted = (ctx.session.questionsAttempted || 0) + 1;
 
-    ctx.session.questionIndex += 1;
-    await sendQuestion(ctx);
+    const isLast = questionIdx + 1 >= ctx.session.questions.length;
+    const btn = isLast
+      ? [{ text: '✅ Done', callback_data: 'done' }]
+      : [{ text: 'Next ➡️', callback_data: 'next' }];
+
+    await ctx.editMessageText(feedback, {
+      parse_mode: 'Markdown',
+      reply_markup: { inline_keyboard: [btn] },
+    });
   } catch (err) {
     console.error('Study answer error:', err.message);
     await ctx.reply('❌ Error processing answer. Try /start again.');
