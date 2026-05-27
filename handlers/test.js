@@ -85,16 +85,37 @@ async function handleDone(ctx) {
   const answers = ctx.session.studyAnswers || {};
   const questions = ctx.session.questions || [];
   let correct = 0;
+  const wrongList = [];
   Object.keys(answers).forEach((idx) => {
     const q = questions[parseInt(idx)];
     if (!q) return;
-    const correctIdx = (q.options || []).findIndex((o) => o.is_correct);
-    if (correctIdx >= 0 && LABELS[correctIdx] === answers[idx]) correct++;
+    const opts = q.options || [];
+    const correctIdx = opts.findIndex((o) => o.is_correct);
+    const isRight = correctIdx >= 0 && LABELS[correctIdx] === answers[idx];
+    if (isRight) { correct++; return; }
+    wrongList.push({
+      question_text: q.question_text,
+      selected_label: answers[idx],
+      selected_text: opts[LABELS.indexOf(answers[idx])]?.option_text || '',
+      correct_label: LABELS[correctIdx] || '?',
+      correct_text: opts[correctIdx]?.option_text || '',
+      explanation: q.explanation || '',
+    });
   });
   const total = Object.keys(answers).length;
-  const msg = total > 0
-    ? `✅ *You have completed this exam!*\n\n📊 Score: ${correct} / ${total} correct (${Math.round((correct / total) * 100)}%)\n\n[🌐 Go to ofijan.com for more](${SITE_LINK})`
-    : '✅ Done!\n\n[🌐 Go to ofijan.com for more](' + SITE_LINK + ')';
+  let msg = total > 0
+    ? `✅ *You have completed this exam!*\n\n📊 Score: ${correct} / ${total} correct (${Math.round((correct / total) * 100)}%)\n`
+    : '✅ Done!\n';
+  if (wrongList.length > 0) {
+    msg += '\n*Review wrong answers:*\n';
+    wrongList.slice(0, 10).forEach((w) => {
+      msg += `\n❌ ${w.question_text}\n`;
+      msg += `   Your answer: ${w.selected_label}. ${w.selected_text}\n`;
+      msg += `   Correct: ${w.correct_label}. ${w.correct_text}\n`;
+    });
+    if (wrongList.length > 10) msg += `\n_... and ${wrongList.length - 10} more_`;
+  }
+  msg += `\n[🌐 Go to ofijan.com for more](${SITE_LINK})`;
   ctx.session.mode = null;
   ctx.session.questions = [];
   ctx.session.studyAnswers = {};
