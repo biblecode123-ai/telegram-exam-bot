@@ -30,13 +30,6 @@ async function handleStudyAnswer(ctx) {
     await ctx.editMessageText(feedback, { parse_mode: 'Markdown' });
 
     ctx.session.questionsAttempted = (ctx.session.questionsAttempted || 0) + 1;
-    if (ctx.session.questionsAttempted >= 100) {
-      await ctx.reply(
-        '⚠️ *You have reached your free limit (100 questions).*\n\nContinue on our website: https://yourwebsite.com',
-        { parse_mode: 'Markdown' }
-      );
-      return;
-    }
 
     ctx.session.questionIndex += 1;
     await sendQuestion(ctx);

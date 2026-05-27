@@ -2,6 +2,25 @@ const api = require('../services/api');
 
 const LABELS = ['A', 'B', 'C', 'D'];
 
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function extractQuestion(item) {
+  const q = item.question || item;
+  return {
+    id: q.id,
+    question_text: q.question_text,
+    explanation: q.explanation,
+    options: shuffle(q.options || []),
+  };
+}
+
 async function handleStudyMode(ctx) {
   try {
     if (await isLimitReached(ctx)) return;
@@ -46,20 +65,20 @@ async function handleTestMode(ctx) {
 async function loadQuestions(ctx) {
   const { examId } = ctx.session;
 
-  const { data } = await api.get(`/exams/${examId}/questions`, {
-    params: { include: 'questions' },
+  const { data } = await api.get(`/exams/public/${examId}/questions`, {
+    params: { mode: 'study' },
   });
 
-  const examData = data.data || data;
-  const questions = examData.questions || [];
+  const apiData = data.data || data;
+  const items = apiData.questions || [];
 
-  if (!questions.length) {
+  if (!items.length) {
     await ctx.reply('❌ No questions found for this exam.');
     return false;
   }
 
-  ctx.session.questions = questions;
-  ctx.session.totalQuestions = questions.length;
+  ctx.session.questions = items.map(extractQuestion);
+  ctx.session.totalQuestions = ctx.session.questions.length;
   return true;
 }
 
@@ -82,7 +101,10 @@ async function sendQuestion(ctx) {
   ]);
 
   if (mode === 'test') {
-    keyboard.push([{ text: '🏁 Finish Test', callback_data: 'finish' }]);
+    keyboard.push([
+      { text: '🏁 Finish Test', callback_data: 'finish' },
+      { text: '🚫 Cancel', callback_data: 'cancel_test' },
+    ]);
   }
 
   await ctx.reply(`*${progress}*\n\n${q.question_text}`, {

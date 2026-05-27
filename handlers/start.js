@@ -20,8 +20,8 @@ async function startHandler(ctx) {
     ]);
 
     await ctx.reply(
-      '🎓 Welcome to Exit Exam Practice Bot!\n\nSelect an exam category to begin:',
-      { reply_markup: { inline_keyboard: buttons } }
+      '🎓 *Welcome to Exit Exam Practice Bot!*\n\nSelect an exam category to begin, or use /help for commands.',
+      { parse_mode: 'Markdown', reply_markup: { inline_keyboard: buttons } }
     );
   } catch (err) {
     console.error('Start error:', err.message);

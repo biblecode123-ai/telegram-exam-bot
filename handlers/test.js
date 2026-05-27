@@ -55,6 +55,19 @@ async function handleFinishTest(ctx) {
   }
 }
 
+async function handleCancelTest(ctx) {
+  try {
+    await ctx.answerCbQuery();
+    ctx.session.mode = null;
+    ctx.session.testAnswers = [];
+    ctx.session.questions = [];
+    ctx.session.questionIndex = 0;
+    await ctx.editMessageText('🚫 Test cancelled. Use /start to begin again.', { parse_mode: 'Markdown' });
+  } catch (err) {
+    console.error('Cancel test error:', err.message);
+  }
+}
+
 async function showTestResults(ctx) {
   const answers = ctx.session.testAnswers;
 
@@ -78,14 +91,11 @@ async function showTestResults(ctx) {
   const wrongAnswers = answers.filter((a) => !a.is_correct);
   if (wrongAnswers.length > 0) {
     report += '\n*Review wrong answers:*\n';
-    wrongAnswers.slice(0, 5).forEach((a) => {
+    wrongAnswers.forEach((a) => {
       report += `\n❌ ${a.question_text}\n`;
       report += `   Your answer: ${a.selected_label}. ${a.selected_text}\n`;
       report += `   Correct: ${a.correct_label}. ${a.correct_text}\n`;
     });
-    if (wrongAnswers.length > 5) {
-      report += `\n_... and ${wrongAnswers.length - 5} more wrong answers_`;
-    }
   }
 
   report += '\n\nUse /start to try another exam.';
@@ -100,3 +110,4 @@ async function showTestResults(ctx) {
 
 module.exports = handleTestAnswer;
 module.exports.handleFinishTest = handleFinishTest;
+module.exports.handleCancelTest = handleCancelTest;
