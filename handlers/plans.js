@@ -1,6 +1,18 @@
 const api = require('../services/api');
 const axios = require('axios');
 
+function clearPaymentSession(ctx) {
+  ctx.session.awaitingPaymentProof = false;
+  ctx.session.awaitingPaymentName = false;
+  ctx.session.awaitingTransactionId = false;
+  ctx.session.awaitingPaymentRemark = false;
+  ctx.session.paymentPhoto = null;
+  ctx.session.pendingPlan = null;
+  ctx.session.paymentPlanId = null;
+  ctx.session.paymentName = null;
+  ctx.session.paymentTransactionId = null;
+}
+
 async function handlePlans(ctx) {
   try {
     const { data } = await api.get('/plans');
@@ -88,23 +100,44 @@ async function handlePaymentPhoto(ctx, next) {
   const planId = ctx.session.paymentPlanId;
   const plan = ctx.session.pendingPlan;
   if (!planId || !plan) {
-    ctx.session.awaitingPaymentProof = false;
+    clearPaymentSession(ctx);
     return await ctx.reply('❌ Session expired. Use /plans to start again.');
   }
 
-  await ctx.reply('📸 Got your screenshot! Now enter the *transaction ID/reference number*:', { parse_mode: 'Markdown' });
-  ctx.session.awaitingTransactionId = true;
   ctx.session.paymentPhoto = ctx.message.photo;
+  ctx.session.awaitingPaymentProof = false;
+  ctx.session.awaitingPaymentName = true;
+
+  await ctx.reply('📸 Got your screenshot!\n\nPlease enter your *full name*:', { parse_mode: 'Markdown' });
+}
+
+async function handlePaymentName(ctx, next) {
+  if (!ctx.session.awaitingPaymentName || !ctx.message?.text) return next();
+
+  ctx.session.paymentName = ctx.message.text.trim();
+  ctx.session.awaitingPaymentName = false;
+  ctx.session.awaitingTransactionId = true;
+
+  await ctx.reply('✅ Thank you, *' + ctx.session.paymentName + '*!\n\nNow enter the *transaction ID/reference number*:', { parse_mode: 'Markdown' });
 }
 
 async function handlePaymentTransaction(ctx, next) {
   if (!ctx.session.awaitingTransactionId || !ctx.message?.text) return next();
 
-  const transactionId = ctx.message.text.trim();
+  ctx.session.paymentTransactionId = ctx.message.text.trim();
+  ctx.session.awaitingTransactionId = false;
+  ctx.session.awaitingPaymentRemark = true;
+
+  await ctx.reply('✅ Got it!\n\nAny *remark or note*? (or send /skip to finish)', { parse_mode: 'Markdown' });
+}
+
+async function handlePaymentRemark(ctx, next) {
+  if (!ctx.session.awaitingPaymentRemark || !ctx.message?.text) return next();
+
+  const remark = ctx.message.text.trim() === '/skip' ? '' : ctx.message.text.trim();
 
   if (!ctx.session.authToken) {
-    ctx.session.awaitingPaymentProof = false;
-    ctx.session.awaitingTransactionId = false;
+    clearPaymentSession(ctx);
     return await ctx.reply('❌ You are not logged in. Use /login first.');
   }
 
@@ -121,22 +154,20 @@ async function handlePaymentTransaction(ctx, next) {
     const form = new FormData();
     form.append('plan_id', String(ctx.session.paymentPlanId));
     form.append('amount', String(ctx.session.pendingPlan.price));
-    form.append('transaction_id', transactionId);
+    form.append('transaction_id', ctx.session.paymentTransactionId);
     form.append('payment_method', 'telegram');
     form.append('screenshot', buffer, { filename: 'receipt.jpg', contentType: 'image/jpeg' });
+    form.append('student_name', ctx.session.paymentName);
+    if (remark) form.append('remark', remark);
 
-    const { data: result } = await api.post('/payments/submit-proof', form, {
+    await api.post('/payments/submit-proof', form, {
       headers: {
         ...form.getHeaders(),
         Authorization: `Bearer ${ctx.session.authToken}`,
       },
     });
 
-    ctx.session.awaitingPaymentProof = false;
-    ctx.session.awaitingTransactionId = false;
-    ctx.session.paymentPhoto = null;
-    ctx.session.pendingPlan = null;
-    ctx.session.paymentPlanId = null;
+    clearPaymentSession(ctx);
 
     await ctx.reply(
       `✅ *Payment proof submitted!*\n\nYour request is pending review. An admin will verify and activate your premium access.\n\nUse /profile to check your status.`,
@@ -151,10 +182,9 @@ async function handlePaymentTransaction(ctx, next) {
     } else {
       msg += 'Try again or contact support.';
     }
-    ctx.session.awaitingPaymentProof = false;
-    ctx.session.awaitingTransactionId = false;
+    clearPaymentSession(ctx);
     await ctx.reply(msg);
   }
 }
 
-module.exports = { handlePlans, handleBuyPlan, handlePaymentPhoto, handlePaymentTransaction };
+module.exports = { handlePlans, handleBuyPlan, handlePaymentPhoto, handlePaymentName, handlePaymentTransaction, handlePaymentRemark };
