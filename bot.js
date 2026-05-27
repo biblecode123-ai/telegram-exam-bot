@@ -13,6 +13,7 @@ const handleStudyAnswer = require('./handlers/study');
 const handleTestAnswer = require('./handlers/test');
 const { handleFinishTest, handlePrev, handleNext, handleDone, handleCancelTest } = require('./handlers/test');
 const helpHandler = require('./handlers/help');
+const { handleRegister, handleLogin, handleLogout, handleProfile, handleAuthInput } = require('./handlers/auth');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
@@ -29,8 +30,16 @@ bot.use(session({
     testAnswers: {},
     studyAnswers: {},
     questionsAttempted: 0,
+    authToken: null,
+    user: null,
+    regStep: null,
+    regData: {},
+    loginStep: null,
+    loginData: {},
   }),
 }));
+
+bot.use(handleAuthInput);
 
 bot.start(startHandler);
 
@@ -55,6 +64,10 @@ bot.action('noop', (ctx) => ctx.answerCbQuery());
 
 bot.help(helpHandler);
 bot.command('cancel', handleCancelTest);
+bot.command('register', handleRegister);
+bot.command('login', handleLogin);
+bot.command('logout', handleLogout);
+bot.command('profile', handleProfile);
 
 bot.catch((err) => {
   console.error('Bot error:', err);
