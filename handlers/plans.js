@@ -83,8 +83,9 @@ async function handleBuyPlan(ctx) {
       `   📱 *Tele Birr*\n` +
       `   Number: *0905180028*\n` +
       `   Name: *Million Sime*\n\n` +
-      `2. After payment, send a photo of the receipt/transaction screenshot\n\n` +
-      `➡️ *Send the payment screenshot here to continue*`;
+      `2. After payment, take a screenshot of the receipt\n\n` +
+      `3. Upload the photo **here in this chat** (use 📎 Attach → Photo)\n\n` +
+      `➡️ *Send the payment screenshot now to continue*`;
 
     await ctx.editMessageText(msg, { parse_mode: 'Markdown' });
     ctx.session.awaitingPaymentProof = true;
