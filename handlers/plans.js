@@ -49,6 +49,7 @@ async function handlePlans(ctx) {
     }
 
     msg += '❗ *You need to login first.*\nUse /login or /register to create an account.';
+    ctx.session.redirectAfterAuth = 'plans';
     await ctx.reply(msg, { parse_mode: 'Markdown' });
   } catch (err) {
     console.error('Plans error:', err.message);

@@ -70,10 +70,15 @@ async function handleAuthInput(ctx, next) {
           ctx.session.user = data.user;
           ctx.session.regStep = null;
           ctx.session.regData = {};
-          await ctx.reply(
-            `✅ *Registration successful!*\n\nWelcome, ${data.user.name || data.user.email}! Use /start to begin practicing.`,
-            { parse_mode: 'Markdown' }
-          );
+          const regMsg = ctx.session.redirectAfterAuth === 'plans'
+            ? `✅ *Registration successful!*\n\nWelcome, ${data.user.name || data.user.email}!`
+            : `✅ *Registration successful!*\n\nWelcome, ${data.user.name || data.user.email}! Use /start to begin practicing.`;
+          await ctx.reply(regMsg, { parse_mode: 'Markdown' });
+          if (ctx.session.redirectAfterAuth === 'plans') {
+            ctx.session.redirectAfterAuth = null;
+            const { handlePlans } = require('./plans');
+            return await handlePlans(ctx);
+          }
         } catch (err) {
           const errData = err.response?.data;
           ctx.session.regStep = null;
@@ -107,10 +112,15 @@ async function handleAuthInput(ctx, next) {
           ctx.session.user = data.user;
           ctx.session.loginStep = null;
           ctx.session.loginData = {};
-          await ctx.reply(
-            `✅ *Welcome back, ${data.user.name || data.user.email}!*\n\nUse /start to begin practicing.`,
-            { parse_mode: 'Markdown' }
-          );
+          const loginMsg = ctx.session.redirectAfterAuth === 'plans'
+            ? `✅ *Welcome back, ${data.user.name || data.user.email}!*`
+            : `✅ *Welcome back, ${data.user.name || data.user.email}!*\n\nUse /start to begin practicing.`;
+          await ctx.reply(loginMsg, { parse_mode: 'Markdown' });
+          if (ctx.session.redirectAfterAuth === 'plans') {
+            ctx.session.redirectAfterAuth = null;
+            const { handlePlans } = require('./plans');
+            return await handlePlans(ctx);
+          }
         } catch (err) {
           const errData = err.response?.data;
           ctx.session.loginStep = null;

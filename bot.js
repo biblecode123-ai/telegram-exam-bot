@@ -46,6 +46,7 @@ bot.use(session({
     paymentPlanId: null,
     paymentName: null,
     paymentTransactionId: null,
+    redirectAfterAuth: null,
   }),
 }));
 
