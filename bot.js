@@ -11,7 +11,7 @@ const {
 const { handleStudyMode, handleTestMode } = require('./handlers/modes');
 const handleStudyAnswer = require('./handlers/study');
 const handleTestAnswer = require('./handlers/test');
-const { handleFinishTest, handleNext, handleDone, handleCancelTest } = require('./handlers/test');
+const { handleFinishTest, handlePrev, handleNext, handleDone, handleCancelTest } = require('./handlers/test');
 const helpHandler = require('./handlers/help');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -24,7 +24,8 @@ bot.use(session({
     examsPage: 1,
     questionPage: 1,
     totalQuestions: 0,
-    testAnswers: [],
+    testAnswers: {},
+    studyAnswers: {},
     questionsAttempted: 0,
   }),
 }));
@@ -43,6 +44,7 @@ bot.action('mode_test', handleTestMode);
 bot.action(/^ans_/, handleStudyAnswer);
 bot.action(/^tans_/, handleTestAnswer);
 
+bot.action('prev', handlePrev);
 bot.action('next', handleNext);
 bot.action('finish', handleFinishTest);
 bot.action('done', handleDone);

@@ -19,25 +19,26 @@ async function handleStudyAnswer(ctx) {
     const correctLabel = LABELS[correctIdx] || '?';
     const correctText = options[correctIdx]?.option_text || '';
 
-    const icon = isCorrect ? '✅' : '❌';
-    const status = isCorrect ? 'Correct!' : 'Wrong!';
+    if (!ctx.session.studyAnswers) ctx.session.studyAnswers = {};
+    ctx.session.studyAnswers[questionIdx] = selectedLabel;
+    ctx.session.questionsAttempted = (ctx.session.questionsAttempted || 0) + 1;
 
+    const icon = isCorrect ? '✅' : '❌';
     const feedback =
-      `${icon} *${status}*\n\n` +
+      `${icon} *${isCorrect ? 'Correct!' : 'Wrong!'}*\n\n` +
       `*Your answer:* ${selectedLabel}. ${selectedOption?.option_text || ''}\n` +
       `*Correct Answer:* ${correctLabel}. ${correctText}\n` +
       `*Explanation:* ${question.explanation || 'No explanation available.'}`;
 
-    ctx.session.questionsAttempted = (ctx.session.questionsAttempted || 0) + 1;
-
-    const isLast = questionIdx + 1 >= ctx.session.questions.length;
-    const btn = isLast
-      ? [{ text: '✅ Done', callback_data: 'done' }]
-      : [{ text: 'Next ➡️', callback_data: 'next' }];
+    const total = ctx.session.questions.length;
+    const navRow = [];
+    if (questionIdx > 0) navRow.push({ text: '⬅️ Prev', callback_data: 'prev' });
+    if (questionIdx < total - 1) navRow.push({ text: 'Next ➡️', callback_data: 'next' });
+    if (navRow.length === 0) navRow.push({ text: '✅ Done', callback_data: 'done' });
 
     await ctx.editMessageText(feedback, {
       parse_mode: 'Markdown',
-      reply_markup: { inline_keyboard: [btn] },
+      reply_markup: { inline_keyboard: [navRow] },
     });
   } catch (err) {
     console.error('Study answer error:', err.message);

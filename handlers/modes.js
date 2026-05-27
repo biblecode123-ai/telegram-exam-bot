@@ -27,6 +27,7 @@ async function handleStudyMode(ctx) {
 
     ctx.session.mode = 'study';
     ctx.session.questionIndex = 0;
+    ctx.session.studyAnswers = {};
 
     await ctx.answerCbQuery();
     await ctx.editMessageText('📖 *Study Mode started!*\n\n_Loading questions..._', {
@@ -47,7 +48,7 @@ async function handleTestMode(ctx) {
 
     ctx.session.mode = 'test';
     ctx.session.questionIndex = 0;
-    ctx.session.testAnswers = [];
+    ctx.session.testAnswers = {};
 
     await ctx.answerCbQuery();
     await ctx.editMessageText('📝 *Test Mode started!*\n\n_Loading questions..._', {
@@ -85,10 +86,7 @@ async function loadQuestions(ctx) {
 async function sendQuestion(ctx) {
   const { questions, questionIndex, mode } = ctx.session;
 
-  if (questionIndex >= questions.length) {
-    await ctx.reply('✅ You have completed this exam!');
-    return;
-  }
+  if (questionIndex >= questions.length || questionIndex < 0) return;
 
   const q = questions[questionIndex];
   const options = q.options || [];
@@ -98,18 +96,35 @@ async function sendQuestion(ctx) {
 
   const optionsText = options.map((opt, i) => `${LABELS[i]}. ${opt.option_text}`).join('\n');
 
-  const keyboard = options.map((opt, i) => [
-    { text: LABELS[i], callback_data: `${prefix}_${questionIndex}_${LABELS[i]}` },
-  ]);
+  let answeredLabel = null;
+  if (mode === 'study') {
+    const a = ctx.session.studyAnswers || {};
+    answeredLabel = a[questionIndex];
+  } else {
+    const ta = ctx.session.testAnswers || {};
+    answeredLabel = ta[questionIndex] ? ta[questionIndex].selected_label : null;
+  }
+  const answeredText = answeredLabel ? `\n\n*Your answer:* ${answeredLabel}` : '';
 
+  const optionRow = options.map((opt, i) => ({
+    text: answeredLabel === LABELS[i] ? `✅ ${LABELS[i]}` : LABELS[i],
+    callback_data: `${prefix}_${questionIndex}_${LABELS[i]}`,
+  }));
+
+  const navRow = [];
+  if (questionIndex > 0) navRow.push({ text: '⬅️ Prev', callback_data: 'prev' });
+  navRow.push({ text: `📄 ${questionIndex + 1}/${questions.length}`, callback_data: 'noop' });
+  if (questionIndex < questions.length - 1) navRow.push({ text: 'Next ➡️', callback_data: 'next' });
+
+  const keyboard = [optionRow, navRow];
   if (mode === 'test') {
     keyboard.push([
-      { text: '🏁 Finish Test', callback_data: 'finish' },
+      { text: '🏁 Submit Test', callback_data: 'finish' },
       { text: '🚫 Cancel', callback_data: 'cancel_test' },
     ]);
   }
 
-  await ctx.reply(`*${progress}*\n\n${q.question_text}\n\n${optionsText}`, {
+  await ctx.reply(`*${progress}*\n\n${q.question_text}\n\n${optionsText}${answeredText}`, {
     parse_mode: 'Markdown',
     reply_markup: { inline_keyboard: keyboard },
   });

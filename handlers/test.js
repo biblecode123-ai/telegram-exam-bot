@@ -14,7 +14,8 @@ async function handleTestAnswer(ctx) {
     const selectedOption = options[selectedIdx];
     const isCorrect = selectedOption && selectedOption.is_correct;
 
-    ctx.session.testAnswers.push({
+    if (!ctx.session.testAnswers) ctx.session.testAnswers = {};
+    ctx.session.testAnswers[questionIdx] = {
       question_id: question.id,
       question_text: question.question_text,
       selected_label: selectedLabel,
@@ -23,18 +24,21 @@ async function handleTestAnswer(ctx) {
       correct_label: LABELS[options.findIndex((o) => o.is_correct)] || '?',
       correct_text: options.find((o) => o.is_correct)?.option_text || '',
       explanation: question.explanation || '',
-    });
+    };
 
     ctx.session.questionsAttempted = (ctx.session.questionsAttempted || 0) + 1;
 
-    const isLast = questionIdx + 1 >= ctx.session.questions.length;
-    const btn = isLast
-      ? [{ text: '📊 See Results', callback_data: 'finish' }]
-      : [{ text: 'Next ➡️', callback_data: 'next' }];
+    const total = ctx.session.questions.length;
+    const navRow = [];
+    if (questionIdx > 0) navRow.push({ text: '⬅️ Prev', callback_data: 'prev' });
+    if (questionIdx < total - 1) navRow.push({ text: 'Next ➡️', callback_data: 'next' });
+    if (navRow.length === 0) {
+      navRow.push({ text: '📊 See Results', callback_data: 'finish' });
+    }
 
     await ctx.editMessageText(
-      `✅ *Answer recorded* — Question ${questionIdx + 1} of ${ctx.session.questions.length}`,
-      { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [btn] } }
+      `✅ *Answer recorded* — Question ${questionIdx + 1} of ${total}`,
+      { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [navRow] } }
     );
   } catch (err) {
     console.error('Test answer error:', err.message);
@@ -42,15 +46,16 @@ async function handleTestAnswer(ctx) {
   }
 }
 
+async function handlePrev(ctx) {
+  await ctx.answerCbQuery();
+  ctx.session.questionIndex -= 1;
+  await sendQuestion(ctx);
+}
+
 async function handleNext(ctx) {
   await ctx.answerCbQuery();
   ctx.session.questionIndex += 1;
-
-  if (ctx.session.mode === 'test' && ctx.session.questionIndex >= ctx.session.questions.length) {
-    await showTestResults(ctx);
-  } else {
-    await sendQuestion(ctx);
-  }
+  await sendQuestion(ctx);
 }
 
 async function handleFinishTest(ctx) {
@@ -67,6 +72,7 @@ async function handleDone(ctx) {
   await ctx.answerCbQuery();
   ctx.session.mode = null;
   ctx.session.questions = [];
+  ctx.session.studyAnswers = {};
   ctx.session.questionIndex = 0;
   await ctx.editMessageText('✅ Done! Use /start to try another exam.', { parse_mode: 'Markdown' });
 }
@@ -75,7 +81,7 @@ async function handleCancelTest(ctx) {
   try {
     await ctx.answerCbQuery();
     ctx.session.mode = null;
-    ctx.session.testAnswers = [];
+    ctx.session.testAnswers = {};
     ctx.session.questions = [];
     ctx.session.questionIndex = 0;
     await ctx.editMessageText('🚫 Test cancelled. Use /start to begin again.', { parse_mode: 'Markdown' });
@@ -85,7 +91,8 @@ async function handleCancelTest(ctx) {
 }
 
 async function showTestResults(ctx) {
-  const answers = ctx.session.testAnswers;
+  const answersMap = ctx.session.testAnswers || {};
+  const answers = Object.values(answersMap).filter(Boolean);
 
   if (answers.length === 0) {
     await ctx.reply('No answers to submit.');
@@ -125,6 +132,7 @@ async function showTestResults(ctx) {
 }
 
 module.exports = handleTestAnswer;
+module.exports.handlePrev = handlePrev;
 module.exports.handleNext = handleNext;
 module.exports.handleFinishTest = handleFinishTest;
 module.exports.handleDone = handleDone;
