@@ -93,6 +93,13 @@ bot.catch((err) => {
   console.error('Bot error:', err);
 });
 
+const http = require('http');
+const PORT = process.env.PORT || 10000;
+http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('ofijan bot is running');
+}).listen(PORT, () => console.log(`Health server on port ${PORT}`));
+
 bot.launch();
 console.log('Bot is running...');
 
