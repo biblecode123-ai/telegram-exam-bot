@@ -25,7 +25,14 @@ async function handleLogout(ctx) {
 async function handleProfile(ctx) {
   const user = ctx.session.user;
   if (!user) {
-    return await ctx.reply('❌ You are not logged in. Use /login or /register.', { parse_mode: 'Markdown' });
+    return await ctx.reply('❌ You are not logged in.', {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '🔑 Login', callback_data: 'cmd_login' }, { text: '📝 Register', callback_data: 'cmd_register' }],
+        ],
+      },
+    });
   }
   await ctx.reply(
     `👤 *Your Profile*\n\nName: ${user.name}\nEmail: ${user.email}\nRole: ${user.role || 'Student'}`,

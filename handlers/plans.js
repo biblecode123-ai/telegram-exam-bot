@@ -48,9 +48,16 @@ async function handlePlans(ctx) {
       return await ctx.reply(msg, { parse_mode: 'Markdown', reply_markup: { inline_keyboard: buttons } });
     }
 
-    msg += '❗ *You need to login first.*\nUse /login or /register to create an account.';
+    msg += '❗ *You need to login first.*';
     ctx.session.redirectAfterAuth = 'plans';
-    await ctx.reply(msg, { parse_mode: 'Markdown' });
+    await ctx.reply(msg, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '🔑 Login', callback_data: 'cmd_login' }, { text: '📝 Register', callback_data: 'cmd_register' }],
+        ],
+      },
+    });
   } catch (err) {
     console.error('Plans error:', err.message);
     await ctx.reply('❌ Failed to load plans. Try again later.');
@@ -62,7 +69,14 @@ async function handleBuyPlan(ctx) {
   await ctx.answerCbQuery();
 
   if (!ctx.session.user || !ctx.session.authToken) {
-    return await ctx.editMessageText('❌ You need to login first.\nUse /login or /register.', { parse_mode: 'Markdown' });
+    return await ctx.editMessageText('❌ You need to login first.', {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '🔑 Login', callback_data: 'cmd_login' }, { text: '📝 Register', callback_data: 'cmd_register' }],
+        ],
+      },
+    });
   }
 
   try {

@@ -89,6 +89,16 @@ bot.action('continue_ad', async (ctx) => {
 
 bot.help(helpHandler);
 bot.command('cancel', handleCancelTest);
+bot.action('cmd_login', async (ctx) => {
+  await ctx.answerCbQuery();
+  const { handleLogin } = require('./handlers/auth');
+  await handleLogin(ctx);
+});
+bot.action('cmd_register', async (ctx) => {
+  await ctx.answerCbQuery();
+  const { handleRegister } = require('./handlers/auth');
+  await handleRegister(ctx);
+});
 bot.command('register', handleRegister);
 bot.command('login', handleLogin);
 bot.command('logout', handleLogout);
