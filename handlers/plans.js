@@ -63,10 +63,13 @@ async function handleBuyPlan(ctx) {
     const msg =
       `💎 *${plan.name} Plan — ${plan.price} ${plan.currency}*\n\n` +
       `📌 *Payment Instructions:*\n\n` +
-      `1. Transfer *${plan.price} ETB* to the following account:\n` +
-      `   Bank: *Commercial Bank of Ethiopia*\n` +
-      `   Account: *100029384756*\n` +
-      `   Name: *Ofijan Educational Services*\n\n` +
+      `1. Transfer *${plan.price} ETB* to **one** of the following:\n\n` +
+      `   🏦 *Bank Account (CBE)*\n` +
+      `   Account: *1000180359064*\n` +
+      `   Name: *Kebede Guta*\n\n` +
+      `   📱 *Tele Birr*\n` +
+      `   Number: *0905180028*\n` +
+      `   Name: *Million Sime*\n\n` +
       `2. After payment, send a photo of the receipt/transaction screenshot\n\n` +
       `➡️ *Send the payment screenshot here to continue*`;
 
