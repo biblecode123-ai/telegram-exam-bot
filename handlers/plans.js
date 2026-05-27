@@ -167,12 +167,15 @@ async function handlePaymentRemark(ctx, next) {
       },
     });
 
+    const inExam = ctx.session.mode && ctx.session.questions?.length > 0;
     clearPaymentSession(ctx);
 
-    await ctx.reply(
-      `✅ *Payment proof submitted!*\n\nYour request is pending review. An admin will verify and activate your premium access.\n\nUse /profile to check your status.`,
-      { parse_mode: 'Markdown' }
-    );
+    const successMsg =
+      `✅ *Payment proof submitted!*\n\nYour request is pending review. An admin will verify and activate your premium access.\n\nUse /profile to check your status.`;
+    const btns = inExam
+      ? { reply_markup: { inline_keyboard: [[{ text: '📚 Continue Exam', callback_data: 'continue_ad' }]] } }
+      : {};
+    await ctx.reply(successMsg, { parse_mode: 'Markdown', ...btns });
   } catch (err) {
     console.error('Payment submission error:', err.message);
     const errData = err.response?.data;
