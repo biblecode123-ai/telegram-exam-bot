@@ -82,14 +82,24 @@ async function handleFinishTest(ctx) {
 
 async function handleDone(ctx) {
   await ctx.answerCbQuery();
+  const answers = ctx.session.studyAnswers || {};
+  const questions = ctx.session.questions || [];
+  let correct = 0;
+  Object.keys(answers).forEach((idx) => {
+    const q = questions[parseInt(idx)];
+    if (!q) return;
+    const correctIdx = (q.options || []).findIndex((o) => o.is_correct);
+    if (correctIdx >= 0 && LABELS[correctIdx] === answers[idx]) correct++;
+  });
+  const total = Object.keys(answers).length;
+  const msg = total > 0
+    ? `✅ *You have completed this exam!*\n\n📊 Score: ${correct} / ${total} correct (${Math.round((correct / total) * 100)}%)\n\n[🌐 Go to ofijan.com for more](${SITE_LINK})`
+    : '✅ Done!\n\n[🌐 Go to ofijan.com for more](' + SITE_LINK + ')';
   ctx.session.mode = null;
   ctx.session.questions = [];
   ctx.session.studyAnswers = {};
   ctx.session.questionIndex = 0;
-  await ctx.editMessageText(
-    '✅ Done!\n\n[🌐 Go to ofijan.com for more](' + SITE_LINK + ')',
-    { parse_mode: 'Markdown' }
-  );
+  await ctx.editMessageText(msg, { parse_mode: 'Markdown' });
 }
 
 async function handleCancelTest(ctx) {
