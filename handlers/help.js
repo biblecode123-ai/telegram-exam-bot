@@ -1,6 +1,6 @@
 async function helpHandler(ctx) {
   const msg =
-    '📚 *Exit Exam Practice Bot — Commands*\n\n' +
+    '📚 *ofijan exam Practice Bot — Commands*\n\n' +
     '/start — Choose an exam category and begin\n' +
     '/cancel — Cancel current exam and return to start\n' +
     '/help — Show this message\n\n' +

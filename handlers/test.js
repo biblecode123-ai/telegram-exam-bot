@@ -1,6 +1,15 @@
-const { sendQuestion, LABELS } = require('./modes');
+const { sendQuestion, LABELS, SITE_LINK, formatTime } = require('./modes');
+
+function checkTimeExpired(ctx) {
+  if (!ctx.session.timeLimit || !ctx.session.startTime) return false;
+  return ctx.session.timeLimit - (Date.now() - ctx.session.startTime) <= 0;
+}
 
 async function handleTestAnswer(ctx) {
+  if (checkTimeExpired(ctx)) {
+    await ctx.answerCbQuery('⏰ Time is up!');
+    return await showTestResults(ctx);
+  }
   try {
     const parts = ctx.callbackQuery.data.split('_');
     const questionIdx = parseInt(parts[1]);
@@ -47,18 +56,21 @@ async function handleTestAnswer(ctx) {
 }
 
 async function handlePrev(ctx) {
+  if (checkTimeExpired(ctx)) { await ctx.answerCbQuery('⏰ Time is up!'); return await showTestResults(ctx); }
   await ctx.answerCbQuery();
   ctx.session.questionIndex -= 1;
   await sendQuestion(ctx);
 }
 
 async function handleNext(ctx) {
+  if (checkTimeExpired(ctx)) { await ctx.answerCbQuery('⏰ Time is up!'); return await showTestResults(ctx); }
   await ctx.answerCbQuery();
   ctx.session.questionIndex += 1;
   await sendQuestion(ctx);
 }
 
 async function handleFinishTest(ctx) {
+  if (checkTimeExpired(ctx)) { await ctx.answerCbQuery('⏰ Time is up!'); }
   try {
     await ctx.answerCbQuery();
     await showTestResults(ctx);
@@ -74,7 +86,10 @@ async function handleDone(ctx) {
   ctx.session.questions = [];
   ctx.session.studyAnswers = {};
   ctx.session.questionIndex = 0;
-  await ctx.editMessageText('✅ Done! Use /start to try another exam.', { parse_mode: 'Markdown' });
+  await ctx.editMessageText(
+    '✅ Done!\n\n[🌐 Go to ofijan.com for more](' + SITE_LINK + ')',
+    { parse_mode: 'Markdown' }
+  );
 }
 
 async function handleCancelTest(ctx) {
@@ -121,12 +136,12 @@ async function showTestResults(ctx) {
     });
   }
 
-  report += '\n\nUse /start to try another exam.';
+  report += '\n\n[🌐 Go to ofijan.com for more](' + SITE_LINK + ')';
 
   await ctx.reply(report, { parse_mode: 'Markdown' });
 
   ctx.session.mode = null;
-  ctx.session.testAnswers = [];
+  ctx.session.testAnswers = {};
   ctx.session.questions = [];
   ctx.session.questionIndex = 0;
 }

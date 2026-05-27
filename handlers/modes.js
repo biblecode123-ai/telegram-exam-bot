@@ -1,6 +1,7 @@
 const api = require('../services/api');
 
 const LABELS = ['A', 'B', 'C', 'D'];
+const SITE_LINK = 'https://ofijan.com';
 
 function shuffle(arr) {
   const a = [...arr];
@@ -63,6 +64,14 @@ async function handleTestMode(ctx) {
   }
 }
 
+function formatTime(ms) {
+  if (ms <= 0) return '⏱ 0:00';
+  const totalSec = Math.ceil(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return `⏱ ${min}:${String(sec).padStart(2, '0')}`;
+}
+
 async function loadQuestions(ctx) {
   const { examId } = ctx.session;
 
@@ -78,6 +87,10 @@ async function loadQuestions(ctx) {
     return false;
   }
 
+  const timeLimitMin = apiData.exam?.total_time || 0;
+  ctx.session.timeLimit = timeLimitMin > 0 ? timeLimitMin * 60 * 1000 : 0;
+  ctx.session.startTime = timeLimitMin > 0 ? Date.now() : 0;
+
   ctx.session.questions = items.map(extractQuestion);
   ctx.session.totalQuestions = ctx.session.questions.length;
   return true;
@@ -92,7 +105,13 @@ async function sendQuestion(ctx) {
   const options = q.options || [];
   const prefix = mode === 'test' ? 'tans' : 'ans';
   const label = mode === 'test' ? '📝 Test' : '📖 Study';
-  const progress = `${label} — Question ${questionIndex + 1} / ${questions.length}`;
+
+  let timeStr = '';
+  if (ctx.session.timeLimit && ctx.session.startTime) {
+    const remaining = ctx.session.timeLimit - (Date.now() - ctx.session.startTime);
+    timeStr = ' — ' + (remaining > 0 ? formatTime(remaining) : '⏱ Time up!');
+  }
+  const progress = `${label} — Question ${questionIndex + 1} / ${questions.length}${timeStr}`;
 
   const optionsText = options.map((opt, i) => `${LABELS[i]}. ${opt.option_text}`).join('\n');
 
@@ -134,7 +153,7 @@ async function isLimitReached(ctx) {
   ctx.session.questionsAttempted = ctx.session.questionsAttempted || 0;
   if (ctx.session.questionsAttempted >= 100) {
     await ctx.editMessageText(
-      '⚠️ *You have reached your free limit (100 questions).*\n\nContinue on our website: https://yourwebsite.com',
+      '⚠️ *You have reached your free limit (100 questions).*\n\n[🌐 Go to ofijan.com for more](' + SITE_LINK + ')',
       { parse_mode: 'Markdown' }
     );
     return true;
@@ -142,4 +161,4 @@ async function isLimitReached(ctx) {
   return false;
 }
 
-module.exports = { handleStudyMode, handleTestMode, sendQuestion, LABELS };
+module.exports = { handleStudyMode, handleTestMode, sendQuestion, LABELS, SITE_LINK, formatTime };

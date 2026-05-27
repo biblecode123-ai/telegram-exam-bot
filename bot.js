@@ -24,6 +24,8 @@ bot.use(session({
     examsPage: 1,
     questionPage: 1,
     totalQuestions: 0,
+    timeLimit: 0,
+    startTime: 0,
     testAnswers: {},
     studyAnswers: {},
     questionsAttempted: 0,
