@@ -1,6 +1,13 @@
 const { sendQuestion, LABELS } = require('./modes');
 
 async function handleStudyAnswer(ctx) {
+  if (!ctx.session.questions?.length) {
+    await ctx.answerCbQuery('Session expired');
+    return await ctx.reply('❌ This exam session has ended.', {
+      parse_mode: 'Markdown',
+      reply_markup: { inline_keyboard: [[{ text: '🔄 Start Again', callback_data: 'start' }]] },
+    });
+  }
   try {
     const parts = ctx.callbackQuery.data.split('_');
     const questionIdx = parseInt(parts[1]);
