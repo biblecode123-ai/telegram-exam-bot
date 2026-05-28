@@ -119,37 +119,16 @@ async function handlePaymentPhoto(ctx, next) {
     return await ctx.reply('❌ Session expired. Use /plans to start again.');
   }
 
-  ctx.session.paymentPhoto = ctx.message.photo;
-  ctx.session.awaitingPaymentProof = false;
-  ctx.session.awaitingTransactionId = true;
-
-  await ctx.reply('📸 Got your screenshot!\n\nNow enter the *transaction ID/reference number*:', { parse_mode: 'Markdown' });
-}
-
-async function handlePaymentTransaction(ctx, next) {
-  if (!ctx.session.awaitingTransactionId || !ctx.message?.text) return next();
-
-  ctx.session.paymentTransactionId = ctx.message.text.trim();
-  ctx.session.awaitingTransactionId = false;
-  ctx.session.awaitingPaymentRemark = true;
-
-  await ctx.reply('✅ Got it!\n\nAny *remark or note*? (or send /skip to finish)', { parse_mode: 'Markdown' });
-}
-
-async function handlePaymentRemark(ctx, next) {
-  if (!ctx.session.awaitingPaymentRemark || !ctx.message?.text) return next();
-
-  const remark = ctx.message.text.trim() === '/skip' ? '' : ctx.message.text.trim();
-
   if (!ctx.session.authToken) {
     clearPaymentSession(ctx);
     return await ctx.reply('❌ You are not logged in. Use /login first.');
   }
 
+  ctx.session.awaitingPaymentProof = false;
   await ctx.reply('⏳ Submitting your payment proof...');
 
   try {
-    const photo = ctx.session.paymentPhoto;
+    const photo = ctx.message.photo;
     const fileId = photo[photo.length - 1].file_id;
     const link = await ctx.telegram.getFileLink(fileId);
     const imgRes = await axios.get(link.href, { responseType: 'arraybuffer' });
@@ -159,11 +138,9 @@ async function handlePaymentRemark(ctx, next) {
     const form = new FormData();
     form.append('plan_id', String(ctx.session.paymentPlanId));
     form.append('amount', String(ctx.session.pendingPlan.price));
-    form.append('transaction_id', ctx.session.paymentTransactionId);
     form.append('payment_method', 'telegram');
     form.append('screenshot', buffer, { filename: 'receipt.jpg', contentType: 'image/jpeg' });
     form.append('student_name', ctx.session.user.name);
-    if (remark) form.append('remark', remark);
 
     await api.post('/payments/submit-proof', form, {
       headers: {
@@ -195,4 +172,4 @@ async function handlePaymentRemark(ctx, next) {
   }
 }
 
-module.exports = { handlePlans, handleBuyPlan, handlePaymentPhoto, handlePaymentTransaction, handlePaymentRemark };
+module.exports = { handlePlans, handleBuyPlan, handlePaymentPhoto };

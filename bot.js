@@ -14,7 +14,7 @@ const handleTestAnswer = require('./handlers/test');
 const { handleFinishTest, handlePrev, handleNext, handleDone, handleCancelTest } = require('./handlers/test');
 const helpHandler = require('./handlers/help');
 const { handleRegister, handleLogin, handleLogout, handleProfile, handleAuthInput } = require('./handlers/auth');
-const { handlePlans, handleBuyPlan, handlePaymentPhoto, handlePaymentTransaction, handlePaymentRemark } = require('./handlers/plans');
+const { handlePlans, handleBuyPlan, handlePaymentPhoto } = require('./handlers/plans');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
@@ -38,20 +38,15 @@ bot.use(session({
     loginStep: null,
     loginData: {},
     awaitingPaymentProof: false,
-    awaitingTransactionId: false,
-    awaitingPaymentRemark: false,
     paymentPhoto: null,
     pendingPlan: null,
     paymentPlanId: null,
-    paymentTransactionId: null,
     redirectAfterAuth: null,
   }),
 }));
 
 bot.use(handleAuthInput);
 bot.use(handlePaymentPhoto);
-bot.use(handlePaymentTransaction);
-bot.use(handlePaymentRemark);
 
 bot.start(startHandler);
 
