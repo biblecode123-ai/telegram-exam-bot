@@ -86,6 +86,25 @@ bot.action('continue_ad', async (ctx) => {
   const { sendQuestion } = require('./handlers/modes');
   await sendQuestion(ctx);
 });
+bot.action('login_retry', async (ctx) => {
+  await ctx.answerCbQuery();
+  const { handleLogin } = require('./handlers/auth');
+  await handleLogin(ctx);
+});
+bot.action('reg_retry', async (ctx) => {
+  await ctx.answerCbQuery();
+  const { handleRegister } = require('./handlers/auth');
+  await handleRegister(ctx);
+});
+bot.action('auth_menu', async (ctx) => {
+  await ctx.answerCbQuery();
+  ctx.session.regStep = null;
+  ctx.session.regData = {};
+  ctx.session.loginStep = null;
+  ctx.session.loginData = {};
+  const startHandler = require('./handlers/start');
+  await startHandler(ctx);
+});
 
 bot.help(helpHandler);
 bot.command('cancel', handleCancelTest);

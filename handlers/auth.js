@@ -90,12 +90,27 @@ async function handleAuthInput(ctx, next) {
           const errData = err.response?.data;
           ctx.session.regStep = null;
           ctx.session.regData = {};
-          let msg = errData?.message || 'Registration failed. Try /register again.';
-          if (errData?.errors) {
-            const details = Object.values(errData.errors).flat().join('\n');
-            msg += '\n' + details;
+          let errorMsg;
+          if (err.code === 'ECONNABORTED') {
+            errorMsg = 'Connection timed out. The server is slow.';
+          } else if (!err.response) {
+            console.error('Register network error:', err.message);
+            errorMsg = 'Network error — could not reach the server.';
+          } else {
+            errorMsg = errData?.message || 'Registration failed.';
+            if (errData?.errors) {
+              const details = Object.values(errData.errors).flat().join('\n');
+              errorMsg += '\n' + details;
+            }
           }
-          await ctx.reply('❌ ' + msg);
+          await ctx.reply('❌ ' + errorMsg, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: '🔄 Try Again', callback_data: 'reg_retry' }, { text: '🏠 Main Menu', callback_data: 'auth_menu' }],
+              ],
+            },
+          });
         }
         return;
       }
@@ -132,8 +147,19 @@ async function handleAuthInput(ctx, next) {
           const errData = err.response?.data;
           ctx.session.loginStep = null;
           ctx.session.loginData = {};
-          const msg = errData?.message || 'Login failed. Check your credentials and try /login again.';
-          await ctx.reply('❌ ' + msg);
+          let errorMsg = errData?.message || 'Login failed. Check your credentials.';
+          if (errData?.errors) {
+            const details = Object.values(errData.errors).flat().join('\n');
+            errorMsg += '\n' + details;
+          }
+          await ctx.reply('❌ ' + errorMsg, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: '🔄 Try Again', callback_data: 'login_retry' }, { text: '🏠 Main Menu', callback_data: 'auth_menu' }],
+              ],
+            },
+          });
         }
         return;
       }
