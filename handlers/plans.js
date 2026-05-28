@@ -100,7 +100,14 @@ async function handleBuyPlan(ctx) {
       `3. Upload the photo **here in this chat** (use 📎 Attach → Photo)\n\n` +
       `➡️ *Send the payment screenshot now to continue*`;
 
-    await ctx.editMessageText(msg, { parse_mode: 'Markdown' });
+    await ctx.editMessageText(msg, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '📸 Upload Screenshot', callback_data: 'upload_ss' }],
+        ],
+      },
+    });
     ctx.session.awaitingPaymentProof = true;
     ctx.session.paymentPlanId = planId;
   } catch (err) {

@@ -126,6 +126,10 @@ bot.catch((err) => {
   console.error('Bot error:', err);
 });
 
+bot.action('upload_ss', async (ctx) => {
+  await ctx.answerCbQuery('📸 Use the 📎 Attach button below to send your receipt screenshot', { show_alert: true });
+});
+
 const http = require('http');
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
