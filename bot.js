@@ -141,8 +141,18 @@ http.createServer((req, res) => {
   res.end('ofijan bot is running');
 }).listen(PORT, () => console.log(`Health server on port ${PORT}`));
 
-bot.launch();
+bot.launch().catch((err) => {
+  console.error('Bot launch failed:', err);
+  process.exit(1);
+});
 console.log('Bot is running...');
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+});
