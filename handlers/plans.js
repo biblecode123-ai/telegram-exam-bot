@@ -9,7 +9,6 @@ function clearPaymentSession(ctx) {
   ctx.session.paymentPhoto = null;
   ctx.session.pendingPlan = null;
   ctx.session.paymentPlanId = null;
-  ctx.session.paymentName = null;
   ctx.session.paymentTransactionId = null;
 }
 
@@ -122,19 +121,9 @@ async function handlePaymentPhoto(ctx, next) {
 
   ctx.session.paymentPhoto = ctx.message.photo;
   ctx.session.awaitingPaymentProof = false;
-  ctx.session.awaitingPaymentName = true;
-
-  await ctx.reply('📸 Got your screenshot!\n\nPlease enter your *full name*:', { parse_mode: 'Markdown' });
-}
-
-async function handlePaymentName(ctx, next) {
-  if (!ctx.session.awaitingPaymentName || !ctx.message?.text) return next();
-
-  ctx.session.paymentName = ctx.message.text.trim();
-  ctx.session.awaitingPaymentName = false;
   ctx.session.awaitingTransactionId = true;
 
-  await ctx.reply('✅ Thank you, *' + ctx.session.paymentName + '*!\n\nNow enter the *transaction ID/reference number*:', { parse_mode: 'Markdown' });
+  await ctx.reply('📸 Got your screenshot!\n\nNow enter the *transaction ID/reference number*:', { parse_mode: 'Markdown' });
 }
 
 async function handlePaymentTransaction(ctx, next) {
@@ -173,7 +162,7 @@ async function handlePaymentRemark(ctx, next) {
     form.append('transaction_id', ctx.session.paymentTransactionId);
     form.append('payment_method', 'telegram');
     form.append('screenshot', buffer, { filename: 'receipt.jpg', contentType: 'image/jpeg' });
-    form.append('student_name', ctx.session.paymentName);
+    form.append('student_name', ctx.session.user.name);
     if (remark) form.append('remark', remark);
 
     await api.post('/payments/submit-proof', form, {
@@ -206,4 +195,4 @@ async function handlePaymentRemark(ctx, next) {
   }
 }
 
-module.exports = { handlePlans, handleBuyPlan, handlePaymentPhoto, handlePaymentName, handlePaymentTransaction, handlePaymentRemark };
+module.exports = { handlePlans, handleBuyPlan, handlePaymentPhoto, handlePaymentTransaction, handlePaymentRemark };
