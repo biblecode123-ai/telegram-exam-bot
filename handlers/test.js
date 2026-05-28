@@ -132,7 +132,10 @@ async function handleDone(ctx) {
   ctx.session.questions = [];
   ctx.session.studyAnswers = {};
   ctx.session.questionIndex = 0;
-  await ctx.editMessageText(msg, { parse_mode: 'Markdown' });
+  await ctx.editMessageText(msg, {
+    parse_mode: 'Markdown',
+    reply_markup: { inline_keyboard: [[{ text: '🔄 Start Again', callback_data: 'start' }]] },
+  });
 }
 
 async function handleCancelTest(ctx) {
@@ -142,7 +145,10 @@ async function handleCancelTest(ctx) {
     ctx.session.testAnswers = {};
     ctx.session.questions = [];
     ctx.session.questionIndex = 0;
-    await ctx.editMessageText('🚫 Test cancelled. Use /start to begin again.', { parse_mode: 'Markdown' });
+    await ctx.editMessageText('🚫 Test cancelled.', {
+      parse_mode: 'Markdown',
+      reply_markup: { inline_keyboard: [[{ text: '🔄 Start Again', callback_data: 'start' }]] },
+    });
   } catch (err) {
     console.error('Cancel test error:', err.message);
   }
@@ -181,7 +187,10 @@ async function showTestResults(ctx) {
 
   report += '\n\n[🌐 Go to ofijan.com for more](' + SITE_LINK + ')';
 
-  await ctx.reply(report, { parse_mode: 'Markdown' });
+  await ctx.reply(report, {
+    parse_mode: 'Markdown',
+    reply_markup: { inline_keyboard: [[{ text: '🔄 Start Again', callback_data: 'start' }]] },
+  });
 
   ctx.session.mode = null;
   ctx.session.testAnswers = {};

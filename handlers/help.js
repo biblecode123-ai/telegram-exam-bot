@@ -13,7 +13,14 @@ async function helpHandler(ctx) {
     '📖 *Study* — Answer with instant feedback (shows correct answer)\n' +
     '📝 *Test* — Answer all questions, see results at the end\n\n' +
     '*Tip:* Options are shuffled each time you start!';
-  await ctx.reply(msg, { parse_mode: 'Markdown' });
+  await ctx.reply(msg, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🔄 Start Again', callback_data: 'start' }],
+      ],
+    },
+  });
 }
 
 module.exports = helpHandler;

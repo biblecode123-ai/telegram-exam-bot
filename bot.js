@@ -105,6 +105,11 @@ bot.action('auth_menu', async (ctx) => {
   const startHandler = require('./handlers/start');
   await startHandler(ctx);
 });
+bot.action('start', async (ctx) => {
+  await ctx.answerCbQuery();
+  const startHandler = require('./handlers/start');
+  await startHandler(ctx);
+});
 
 bot.help(helpHandler);
 bot.command('cancel', handleCancelTest);
